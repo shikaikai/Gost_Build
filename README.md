@@ -134,7 +134,7 @@
 
    此配置用于设置一个基于 SOCKS5 的代理系统，能够选择合适的节点进行请求，并具有失败处理和动态更新的能力。
 
-#### 使用方法
+#### 使用方法(直接调用 -- 存在进程意外丢失的问题，推荐另一个方案，在最下面)
 
 将上述两个配置文件 gost.json 和 peer.txt 保存在服务器上，启动 GOST 时使用以下命令：
 
@@ -171,6 +171,86 @@ curl -x socks5h://admin:admin@server_ip:8888 http://ifconfig.me
 
 ```
 
-***ok！ 整个过程部署完毕，我相信小白也一定部署成功了，再次感谢大佬们的贡献。***
+**_ok！ 整个过程部署完毕，我相信小白也一定部署成功了，再次感谢大佬们的贡献。_**
 
 ---
+
+### [补充]
+
+为了要确保 `gost` 进程持续运行并能在崩溃后自动重启，可以使用 `systemd` 来创建一个服务。以下是创建 `gost` 服务的步骤：
+
+1. **创建服务文件**：
+   在 `/etc/systemd/system/` 目录下创建一个名为 `gost.service` 的文件。
+
+   ```bash
+   sudo nano /etc/systemd/system/gost.service
+   ```
+
+   在文件中添加以下内容（根据你的实际路径和配置进行修改）：
+
+   ```ini
+   [Unit]
+   Description=gost service
+   After=network.target
+
+   [Service]
+   ExecStart=/usr/local/bin/gost -C /path/to/gost.json
+   Restart=always
+   RestartSec=3
+   StandardOutput=file:/path/to/gost.log
+   StandardError=inherit
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   注意：
+
+   - 将 `/usr/local/bin/gost` 替换为 `gost` 的实际安装路径。
+   - 将 `/path/to/gost.json` 替换为你的配置文件的实际路径。
+   - `Restart=always` 确保服务崩溃后自动重启。
+   - `RestartSec=3` 设置重启前的延迟时间。
+
+   **修改配置 gost.json**
+
+   [将 peer.txt 的绝对路径写上]
+
+   ```json
+   {
+     "Debug": true,
+     "Retries": 3,
+     "Routes": [
+       {
+         "Retries": 3,
+         "ServeNodes": ["admin:admin@0.0.0.0:8888"],
+         "ChainNodes": [":1080?peer=/etc/gost/peer.txt"]
+       }
+     ]
+   }
+   ```
+
+2. **重新加载 `systemd` 管理器配置**：
+
+   ```bash
+   sudo systemctl daemon-reload
+   ```
+
+3. **启动 `gost` 服务**：
+
+   ```bash
+   sudo systemctl start gost
+   ```
+
+4. **设置开机自动启动**：
+
+   ```bash
+   sudo systemctl enable gost
+   ```
+
+5. **检查服务状态**：
+
+   ```bash
+   sudo systemctl status gost
+   ```
+
+通过以上步骤，可以确保 `gost` 作为守护进程运行，并在意外退出后自动重启。如果你需要查看日志，可以直接查看指定的 `gost.log` 文件。
