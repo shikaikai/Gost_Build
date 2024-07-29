@@ -194,10 +194,10 @@ curl -x socks5h://admin:admin@server_ip:8888 http://ifconfig.me
    After=network.target
 
    [Service]
-   ExecStart=/usr/local/bin/gost -C /path/to/gost.json
+   ExecStart=/usr/local/bin/gost -C /etc/gost/gost.json
    Restart=always
    RestartSec=3
-   StandardOutput=file:/path/to/gost.log
+   StandardOutput=file:/etc/gost/gost.log
    StandardError=inherit
 
    [Install]
@@ -207,9 +207,11 @@ curl -x socks5h://admin:admin@server_ip:8888 http://ifconfig.me
    注意：
 
    - 将 `/usr/local/bin/gost` 替换为 `gost` 的实际安装路径。
-   - 将 `/path/to/gost.json` 替换为你的配置文件的实际路径。
+   - 将 `/etc/gost/gost.json` 替换为你的配置文件的实际路径。
    - `Restart=always` 确保服务崩溃后自动重启。
    - `RestartSec=3` 设置重启前的延迟时间。
+   - `StandardOutput` 是你的日志输出目录，不用日志的时候设置为 null
+   - `StandardError` 表示服务的标准错误输出将继承自其父进程的标准错误输出。这通常意味着，错误信息会输出到调用服务的终端或控制台，而不是重定向到其他文件或服务中。如果不希望在控制台中看到错误信息，可以将 StandardError 设置为其他选项，如 null（不输出）或重定向到文件。
 
    **修改配置 gost.json**
 
